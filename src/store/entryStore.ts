@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type { Entry, CreateEntryInput, UpdateEntryInput } from '@/types'
 import * as entryService from '@/lib/services/entryService'
+import { getTodayDateString } from '@/lib/services/dateService'
 
 /**
  * Entry Store State
@@ -86,7 +87,7 @@ export const useEntryStore = create<EntryState>((set, get) => ({
           b.entry_date.localeCompare(a.entry_date)
         ),
         todayEntry:
-          input.entry_date === entryService.getTodayDateString()
+          input.entry_date === getTodayDateString()
             ? entry
             : state.todayEntry,
       }))
@@ -104,7 +105,7 @@ export const useEntryStore = create<EntryState>((set, get) => ({
    * Create entry for today
    */
   createTodayEntry: async (input: Omit<CreateEntryInput, 'entry_date'>) => {
-    const today = entryService.getTodayDateString()
+    const today = getTodayDateString()
     return get().createEntry({ ...input, entry_date: today })
   },
 

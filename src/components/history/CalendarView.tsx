@@ -1,9 +1,17 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import type { Entry } from '@/types'
-import { RATING_COLORS } from '@/types'
-import { getDatesInMonth } from '@/lib/services/dateService'
+import { RATING_COLORS, RATING_LABELS } from '@/types'
+import { getDatesInMonth, formatDateWithDay, getTodayDateString, parseEntryDate } from '@/lib/services/dateService'
+import { getRatingEmoji } from '@/lib/services/calendarService'
 import { Button } from '../ui/button'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from '../ui/hover-card'
+import { EntryPreviewCard } from './EntryPreviewCard'
+import { MonthStats } from './MonthStats'
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface CalendarViewProps {
@@ -29,11 +37,14 @@ export function CalendarView({
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth() + 1 // 1-12
 
-  // Create entry map for quick lookups
-  const entryMap = new Map<string, Entry>()
-  entries.forEach((entry) => {
-    entryMap.set(entry.entry_date, entry)
-  })
+  // Create entry map for quick lookups (memoized for performance)
+  const entryMap = useMemo(() => {
+    const map = new Map<string, Entry>()
+    entries.forEach((entry) => {
+      map.set(entry.entry_date, entry)
+    })
+    return map
+  }, [entries])
 
   // Get all dates in the month
   const datesInMonth = getDatesInMonth(year, month)
@@ -110,46 +121,93 @@ export function CalendarView({
           {datesInMonth.map((dateString) => {
             const entry = entryMap.get(dateString)
             const isSelected = selectedDate === dateString
-            const isToday =
-              dateString ===
-              new Date().toISOString().split('T')[0]
+            const isToday = dateString === getTodayDateString()
 
-            const day = new Date(dateString).getDate()
+            const day = parseEntryDate(dateString).getDate()
 
+            // If entry exists, wrap in HoverCard for preview
+            if (entry) {
+              return (
+                <HoverCard key={dateString} openDelay={300} closeDelay={100}>
+                  <HoverCardTrigger asChild>
+                    <button
+                      onClick={() => onSelectDate(dateString)}
+                      className={cn(
+                        'aspect-square border-b border-r border-stone-100',
+                        'relative p-1.5 sm:p-2',
+                        'transition-all duration-200',
+                        'hover:bg-stone-50',
+                        'focus:outline-none focus:ring-2 focus:ring-amber-600 focus:ring-inset',
+                        'focus:z-10',
+                        isSelected && 'ring-2 ring-amber-600 ring-inset bg-amber-50',
+                        isToday && 'font-semibold'
+                      )}
+                      aria-label={`${formatDateWithDay(dateString)}, ${RATING_LABELS[entry.rating]}`}
+                    >
+                      {/* Day number */}
+                      <div className="text-sm text-white relative z-10">
+                        {day}
+                      </div>
+
+                      {/* Rating emoji indicator */}
+                      <div className="absolute top-1 right-1 text-xs opacity-80 z-10">
+                        {getRatingEmoji(entry.rating)}
+                      </div>
+
+                      {/* Entry indicator (color background) */}
+                      <div
+                        className="absolute inset-0 opacity-90"
+                        style={{ backgroundColor: RATING_COLORS[entry.rating] }}
+                      />
+
+                      {/* Today indicator (white dot on colored background) */}
+                      {isToday && (
+                        <div className="absolute bottom-1 left-1 w-1.5 h-1.5 rounded-full bg-white/80 z-10" />
+                      )}
+                    </button>
+                  </HoverCardTrigger>
+                  <HoverCardContent side="top" align="center" className="w-80 bg-white shadow-lg border-stone-300">
+                    <EntryPreviewCard entry={entry} />
+                  </HoverCardContent>
+                </HoverCard>
+              )
+            }
+
+            // Empty date (no entry)
             return (
               <button
                 key={dateString}
                 onClick={() => onSelectDate(dateString)}
                 className={cn(
                   'aspect-square border-b border-r border-stone-100',
-                  'relative p-1.5',
+                  'relative p-1.5 sm:p-2',
                   'transition-all duration-200',
-                  'hover:bg-stone-50',
+                  'group',
+                  'hover:bg-stone-100/50',
                   'focus:outline-none focus:ring-2 focus:ring-amber-600 focus:ring-inset',
+                  'focus:z-10',
                   isSelected && 'ring-2 ring-amber-600 ring-inset bg-amber-50',
                   isToday && 'font-semibold'
                 )}
+                aria-label={formatDateWithDay(dateString)}
               >
                 {/* Day number */}
                 <div
                   className={cn(
                     'text-sm',
-                    entry ? 'text-white' : isToday ? 'text-amber-600' : 'text-stone-700'
+                    isToday ? 'text-amber-600' : 'text-stone-700'
                   )}
                 >
                   {day}
                 </div>
 
-                {/* Entry indicator (color background) */}
-                {entry && (
-                  <div
-                    className="absolute inset-0 -z-10 opacity-90"
-                    style={{ backgroundColor: RATING_COLORS[entry.rating] }}
-                  />
-                )}
+                {/* "+" indicator on hover for empty dates */}
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-30 transition-opacity pointer-events-none">
+                  <Plus className="w-4 h-4 text-stone-400" />
+                </div>
 
                 {/* Today indicator */}
-                {isToday && !entry && (
+                {isToday && (
                   <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-amber-600" />
                 )}
               </button>
@@ -159,7 +217,7 @@ export function CalendarView({
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-stone-600">
+      <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs text-stone-600 items-center">
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-full bg-amber-600" />
           <span>Today</span>
@@ -169,9 +227,25 @@ export function CalendarView({
           <span>Selected</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 bg-stone-400 rounded" />
-          <span>Has entry</span>
+          <div className="w-3 h-3 bg-gradient-to-r from-stone-400 to-teal-600 rounded" />
+          <span>Rated entry (hover to preview)</span>
         </div>
+        <div className="text-stone-500 italic">
+          Click any date to add or view entry
+        </div>
+      </div>
+
+      {/* Month Statistics */}
+      <MonthStats
+        entries={entries}
+        year={year}
+        month={month}
+        className="mt-2"
+      />
+
+      {/* Screen reader hint */}
+      <div id="calendar-hint" className="sr-only">
+        Hover to preview entry, click to view full details
       </div>
     </div>
   )

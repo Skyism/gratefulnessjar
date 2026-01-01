@@ -30,3 +30,6 @@ dist-ssr
 
 # Build files
 build
+
+#mcp
+.mcp.json
