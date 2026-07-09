@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useEntries } from '@/hooks/useEntries'
+import type { UpdateEntryInput } from '@/types'
 import { CalendarView } from '@/components/history/CalendarView'
 import { EntryCard } from '@/components/entry/EntryCard'
 import { EntryDetail } from '@/components/entry/EntryDetail'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Calendar, List } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
 
 /**
  * HistoryPage - View all past entries with three-column layout
@@ -26,6 +27,7 @@ export function HistoryPage() {
     deleteEntry,
   } = useEntries()
 
+  const navigate = useNavigate()
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [view, setView] = useState<'calendar' | 'list'>('calendar')
 
@@ -39,6 +41,10 @@ export function HistoryPage() {
 
   const handleSelectDate = (dateString: string) => {
     setSelectedDate(dateString)
+  }
+
+  const handleUpdate = async (id: string, data: UpdateEntryInput) => {
+    await updateEntry(id, data)
   }
 
   const hasEntries = entries.length > 0
@@ -93,7 +99,7 @@ export function HistoryPage() {
                 </p>
               </div>
               <Button
-                onClick={() => (window.location.href = '/')}
+                onClick={() => navigate('/')}
                 className="mt-4"
               >
                 Write your first entry
@@ -121,7 +127,7 @@ export function HistoryPage() {
                     <CardContent className="p-6">
                       <EntryDetail
                         entry={selectedEntry}
-                        onUpdate={updateEntry}
+                        onUpdate={handleUpdate}
                         onDelete={deleteEntry}
                       />
                     </CardContent>
@@ -152,7 +158,7 @@ export function HistoryPage() {
                       <CardContent className="p-6">
                         <EntryDetail
                           entry={selectedEntry}
-                          onUpdate={updateEntry}
+                          onUpdate={handleUpdate}
                           onDelete={deleteEntry}
                         />
                       </CardContent>
