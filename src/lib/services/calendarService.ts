@@ -33,9 +33,8 @@ export function calculateMonthStats(
   const totalDaysInMonth = datesInMonth.length
 
   // Filter entries for this month
-  const monthEntries = entries.filter((entry) =>
-    datesInMonth.includes(entry.entry_date)
-  )
+  const dateSet = new Set(datesInMonth)
+  const monthEntries = entries.filter((entry) => dateSet.has(entry.entry_date))
 
   const totalEntries = monthEntries.length
 
