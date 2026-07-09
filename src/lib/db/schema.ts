@@ -1,5 +1,6 @@
 import Dexie, { Table } from 'dexie'
 import { Entry } from '@/types'
+import { isValidDateString } from '@/lib/services/dateService'
 
 /**
  * GratefulnessDB - IndexedDB database for offline-first storage
@@ -71,26 +72,70 @@ export async function exportDatabase(): Promise<string> {
 }
 
 /**
+ * Validate an untrusted imported value as a well-formed Entry
+ * Mirrors the constraints enforced by entryService.validateEntry
+ */
+function isImportableEntry(value: unknown): value is Entry {
+  if (typeof value !== 'object' || value === null) return false
+  const e = value as Record<string, unknown>
+
+  return (
+    typeof e.id === 'string' &&
+    e.id.length > 0 &&
+    typeof e.entry_date === 'string' &&
+    isValidDateString(e.entry_date) &&
+    typeof e.gratitude_text === 'string' &&
+    e.gratitude_text.trim().length > 0 &&
+    e.gratitude_text.length <= 1000 &&
+    typeof e.rating === 'number' &&
+    Number.isInteger(e.rating) &&
+    e.rating >= 1 &&
+    e.rating <= 7 &&
+    typeof e.created_at === 'number' &&
+    typeof e.updated_at === 'number' &&
+    (e.synced_at === undefined || typeof e.synced_at === 'number') &&
+    (e.deleted === undefined || typeof e.deleted === 'boolean')
+  )
+}
+
+/**
  * Import entries from JSON (for restore)
  * Note: This will merge with existing entries, not replace
  */
 export async function importDatabase(jsonData: string): Promise<number> {
   try {
-    const entries: Entry[] = JSON.parse(jsonData)
+    const parsed: unknown = JSON.parse(jsonData)
 
     // Validate entries
-    if (!Array.isArray(entries)) {
+    if (!Array.isArray(parsed)) {
       throw new Error('Invalid import data: expected array of entries')
     }
 
     // Add entries (will skip duplicates due to unique entry_date)
     let imported = 0
-    for (const entry of entries) {
+    for (const candidate of parsed) {
+      if (!isImportableEntry(candidate)) {
+        console.warn('Skipped invalid entry:', candidate)
+        continue
+      }
+
+      // Copy only known fields so imports can't inject extra data
+      const entry: Entry = {
+        id: candidate.id,
+        entry_date: candidate.entry_date,
+        gratitude_text: candidate.gratitude_text,
+        rating: candidate.rating,
+        created_at: candidate.created_at,
+        updated_at: candidate.updated_at,
+        ...(candidate.synced_at !== undefined && { synced_at: candidate.synced_at }),
+        ...(candidate.deleted !== undefined && { deleted: candidate.deleted }),
+      }
+
       try {
         await db.entries.add(entry)
         imported++
       } catch (error) {
-        // Skip duplicates or invalid entries
+        // Skip duplicates (unique entry_date constraint)
         console.warn('Skipped entry:', entry.id, error)
       }
     }
