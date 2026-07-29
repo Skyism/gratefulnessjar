@@ -51,10 +51,10 @@ export function validateEntry(
         field: 'rating',
         message: 'Rating is required',
       })
-    } else if (data.rating < 1 || data.rating > 7) {
+    } else if (!Number.isInteger(data.rating) || data.rating < 1 || data.rating > 7) {
       errors.push({
         field: 'rating',
-        message: 'Rating must be between 1 and 7',
+        message: 'Rating must be a whole number between 1 and 7',
       })
     }
   }

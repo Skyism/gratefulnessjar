@@ -27,7 +27,7 @@ export function RatingSelector({
       <label className="text-sm font-medium text-stone-700">
         How was your day?
       </label>
-      <div className="grid grid-cols-7 gap-1.5">
+      <div className="hidden md:grid grid-cols-7 gap-1.5">
         {ratings.map((rating) => {
           const isSelected = value === rating
           const color = RATING_COLORS[rating]

@@ -33,3 +33,6 @@ build
 
 #mcp
 .mcp.json
+
+# Claude Code personal settings
+.claude/settings.local.json
