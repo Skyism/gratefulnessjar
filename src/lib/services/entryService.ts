@@ -4,7 +4,7 @@ import type {
   UpdateEntryInput,
 } from '@/types'
 import { getTodayDateString } from './dateService'
-import { requestJson } from './entryApi'
+import { requestJson } from './apiClient'
 import { ensureLegacyEntriesMigrated } from './entryMigration'
 import { validateEntry } from './entryValidation'
 

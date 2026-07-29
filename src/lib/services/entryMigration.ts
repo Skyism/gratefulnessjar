@@ -1,6 +1,6 @@
 import { db } from '@/lib/db/schema'
 import type { Entry } from '@/types'
-import { requestJson } from './entryApi'
+import { requestJson } from './apiClient'
 
 let migrationPromise: Promise<void> | null = null
 

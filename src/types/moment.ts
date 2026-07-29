@@ -2,7 +2,7 @@ import { Rating } from './rating'
 
 /**
  * Moment interface representing a memorable moment worth keeping
- * Stored in IndexedDB for offline-first functionality
+ * Stored in the shared file-backed store behind /api/moments
  *
  * Unlike entries, there is no one-per-day limit — moment_date is not unique
  */

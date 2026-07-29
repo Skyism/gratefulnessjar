@@ -2,55 +2,13 @@ import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { Plugin } from 'vite'
 import type { CreateEntryInput, Entry, UpdateEntryInput } from '../src/types'
 import { createEntryRepository } from './entryRepository'
-
-type NextFunction = (error?: unknown) => void
-
-function sendJson(
-  response: ServerResponse,
-  statusCode: number,
-  payload: unknown
-): void {
-  response.statusCode = statusCode
-  response.setHeader('Content-Type', 'application/json')
-  response.end(JSON.stringify(payload))
-}
-
-function sendNoContent(response: ServerResponse): void {
-  response.statusCode = 204
-  response.end()
-}
-
-async function readJsonBody<T>(request: IncomingMessage): Promise<T> {
-  let body = ''
-
-  for await (const chunk of request) {
-    body += typeof chunk === 'string' ? chunk : chunk.toString('utf8')
-  }
-
-  return JSON.parse(body) as T
-}
-
-function getStatusCode(error: unknown): number {
-  if (!(error instanceof Error)) {
-    return 500
-  }
-
-  if (error.message === 'Entry not found') {
-    return 404
-  }
-
-  if (
-    error.message.includes('required') ||
-    error.message.includes('Invalid') ||
-    error.message.includes('already exists') ||
-    error.message.includes('Cannot create') ||
-    error.message.includes('between 1 and 7')
-  ) {
-    return 400
-  }
-
-  return 500
-}
+import {
+  getStatusCode,
+  readJsonBody,
+  sendJson,
+  sendNoContent,
+  type NextFunction,
+} from './apiHttp'
 
 function createEntriesApiMiddleware() {
   const repository = createEntryRepository()
@@ -140,7 +98,7 @@ function createEntriesApiMiddleware() {
 
       sendJson(response, 404, { message: 'Route not found' })
     } catch (error) {
-      sendJson(response, getStatusCode(error), {
+      sendJson(response, getStatusCode(error, 'Entry not found'), {
         message: error instanceof Error ? error.message : 'Unexpected server error',
       })
     }
