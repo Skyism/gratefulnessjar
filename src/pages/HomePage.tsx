@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useEntryStore } from '@/store/entryStore'
-import { getTodayDateString, formatDateString } from '@/lib/services/dateService'
+import { getTodayDateString, formatDateWithDay } from '@/lib/services/dateService'
 import { getRandomEntry } from '@/lib/services/entryService'
 import { EntryForm } from '@/components/entry/EntryForm'
 import { EntryDetail } from '@/components/entry/EntryDetail'
@@ -103,7 +103,7 @@ export function HomePage() {
               <CardContent className="space-y-3">
                 <div className="flex items-center justify-between">
                   <time className="text-sm font-medium text-stone-700">
-                    {formatDateString(randomEntry.entry_date)}
+                    {formatDateWithDay(randomEntry.entry_date)}
                   </time>
                   <RatingBadge rating={randomEntry.rating} size="sm" showLabel={false} />
                 </div>

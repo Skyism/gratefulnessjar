@@ -14,6 +14,7 @@ export function Header() {
 
   const navItems = [
     { path: '/', label: 'Today' },
+    { path: '/dashboard', label: 'Dashboard' },
     { path: '/moments', label: 'Moments' },
     { path: '/history', label: 'History' },
   ]

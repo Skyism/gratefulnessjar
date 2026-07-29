@@ -3,9 +3,10 @@ import { Entry, Moment } from '@/types'
 import { isValidDateString } from '@/lib/services/dateService'
 
 /**
- * GratefulnessDB - IndexedDB database for offline-first storage
+ * Legacy browser-local database.
  *
- * Uses Dexie.js as a type-safe wrapper around IndexedDB
+ * Existing entries created before shared sync is enabled are migrated out of
+ * this store into the shared file-backed API on first load.
  */
 export class GratefulnessDB extends Dexie {
   // Declare tables
@@ -15,11 +16,7 @@ export class GratefulnessDB extends Dexie {
   constructor() {
     super('gratefulnessDB')
 
-    // Define schema version 1
     this.version(1).stores({
-      // Primary key: id (auto-indexed)
-      // Unique index: &entry_date (& prefix means unique)
-      // Additional indexes: created_at, updated_at for sorting
       entries: 'id, &entry_date, created_at, updated_at, rating',
     })
 
@@ -37,8 +34,7 @@ export class GratefulnessDB extends Dexie {
 export const db = new GratefulnessDB()
 
 /**
- * Initialize database and handle any setup
- * Call this once when the app starts
+ * Legacy helper kept for migration tooling and development utilities.
  */
 export async function initDatabase(): Promise<void> {
   try {

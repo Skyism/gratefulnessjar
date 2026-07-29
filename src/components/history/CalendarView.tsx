@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import type { Entry } from '@/types'
 import { RATING_COLORS, RATING_LABELS } from '@/types'
-import { getDatesInMonth, formatDateWithDay, getTodayDateString, parseEntryDate } from '@/lib/services/dateService'
+import { getDatesInMonth, formatDateWithDay, getTodayDateString, parseEntryDate, isFuture } from '@/lib/services/dateService'
 import { getRatingEmoji } from '@/lib/services/calendarService'
 import { Button } from '../ui/button'
 import {
@@ -11,6 +11,7 @@ import {
 } from '../ui/hover-card'
 import { EntryPreviewCard } from './EntryPreviewCard'
 import { MonthStats } from './MonthStats'
+import { AddEntryDialog } from '../entry/AddEntryDialog'
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -33,6 +34,8 @@ export function CalendarView({
   className,
 }: CalendarViewProps) {
   const [currentDate, setCurrentDate] = useState(new Date())
+  const [addEntryDialogOpen, setAddEntryDialogOpen] = useState(false)
+  const [selectedDateForAdd, setSelectedDateForAdd] = useState<string | null>(null)
 
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth() + 1 // 1-12
@@ -74,8 +77,8 @@ export function CalendarView({
   return (
     <div className={cn('space-y-4', className)}>
       {/* Month navigation */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-stone-900">
+      <div className="flex items-center justify-between mb-1">
+        <h2 className="text-2xl font-bold text-stone-800 tracking-tight">
           {currentDate.toLocaleDateString('en-US', {
             month: 'long',
             year: 'numeric',
@@ -83,27 +86,42 @@ export function CalendarView({
         </h2>
         <div className="flex items-center gap-2">
           {!isCurrentMonth && (
-            <Button variant="outline" size="sm" onClick={goToToday}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToToday}
+              className="rounded-lg shadow-sm hover:shadow-md transition-shadow"
+            >
               Today
             </Button>
           )}
-          <Button variant="outline" size="icon" onClick={goToPreviousMonth}>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={goToPreviousMonth}
+            className="rounded-lg shadow-sm hover:shadow-md transition-shadow"
+          >
             <ChevronLeft className="w-4 h-4" />
           </Button>
-          <Button variant="outline" size="icon" onClick={goToNextMonth}>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={goToNextMonth}
+            className="rounded-lg shadow-sm hover:shadow-md transition-shadow"
+          >
             <ChevronRight className="w-4 h-4" />
           </Button>
         </div>
       </div>
 
       {/* Calendar grid */}
-      <div className="border border-stone-200 rounded-lg overflow-hidden bg-white">
+      <div className="bg-stone-50/30 rounded-xl p-4">
         {/* Day headers */}
-        <div className="grid grid-cols-7 border-b border-stone-200 bg-stone-50">
+        <div className="grid grid-cols-7 gap-2 mb-2">
           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
             <div
               key={day}
-              className="text-center py-2 text-xs font-medium text-stone-600"
+              className="text-center py-2 text-xs font-semibold text-stone-500 tracking-wide"
             >
               {day}
             </div>
@@ -111,10 +129,10 @@ export function CalendarView({
         </div>
 
         {/* Calendar days */}
-        <div className="grid grid-cols-7">
+        <div className="grid grid-cols-7 gap-2">
           {/* Padding days */}
           {Array.from({ length: paddingDays }).map((_, i) => (
-            <div key={`padding-${i}`} className="aspect-square border-b border-r border-stone-100" />
+            <div key={`padding-${i}`} className="aspect-square" />
           ))}
 
           {/* Month days */}
@@ -133,36 +151,36 @@ export function CalendarView({
                     <button
                       onClick={() => onSelectDate(dateString)}
                       className={cn(
-                        'aspect-square border-b border-r border-stone-100',
-                        'relative p-1.5 sm:p-2',
-                        'transition-all duration-200',
-                        'hover:bg-stone-50',
-                        'focus:outline-none focus:ring-2 focus:ring-amber-600 focus:ring-inset',
+                        'aspect-square rounded-xl',
+                        'relative p-2',
+                        'transition-all duration-300',
+                        'shadow-md hover:shadow-xl hover:scale-105',
+                        'focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2',
                         'focus:z-10',
-                        isSelected && 'ring-2 ring-amber-600 ring-inset bg-amber-50',
-                        isToday && 'font-semibold'
+                        isSelected && 'ring-2 ring-amber-500 ring-offset-2 scale-105',
+                        isToday && 'font-bold ring-2 ring-amber-400 ring-offset-2'
                       )}
                       aria-label={`${formatDateWithDay(dateString)}, ${RATING_LABELS[entry.rating]}`}
                     >
                       {/* Day number */}
-                      <div className="text-sm text-white relative z-10">
+                      <div className="text-sm text-white relative z-10 font-medium">
                         {day}
                       </div>
 
                       {/* Rating emoji indicator */}
-                      <div className="absolute top-1 right-1 text-xs opacity-80 z-10">
+                      <div className="absolute top-1.5 right-1.5 text-base opacity-90 z-10">
                         {getRatingEmoji(entry.rating)}
                       </div>
 
                       {/* Entry indicator (color background) */}
                       <div
-                        className="absolute inset-0 opacity-90"
+                        className="absolute inset-0 rounded-xl"
                         style={{ backgroundColor: RATING_COLORS[entry.rating] }}
                       />
 
                       {/* Today indicator (white dot on colored background) */}
                       {isToday && (
-                        <div className="absolute bottom-1 left-1 w-1.5 h-1.5 rounded-full bg-white/80 z-10" />
+                        <div className="absolute bottom-1.5 left-1.5 w-2 h-2 rounded-full bg-white shadow-sm z-10" />
                       )}
                     </button>
                   </HoverCardTrigger>
@@ -174,27 +192,42 @@ export function CalendarView({
             }
 
             // Empty date (no entry)
+            const isFutureDate = isFuture(dateString)
+
             return (
               <button
                 key={dateString}
-                onClick={() => onSelectDate(dateString)}
+                onClick={() => {
+                  if (!isFutureDate) {
+                    // Open dialog to add entry for past/today dates
+                    setSelectedDateForAdd(dateString)
+                    setAddEntryDialogOpen(true)
+                  } else {
+                    // Just select future dates (no entry creation)
+                    onSelectDate(dateString)
+                  }
+                }}
                 className={cn(
-                  'aspect-square border-b border-r border-stone-100',
-                  'relative p-1.5 sm:p-2',
-                  'transition-all duration-200',
+                  'aspect-square rounded-xl',
+                  'relative p-2',
+                  'transition-all duration-300',
                   'group',
-                  'hover:bg-stone-100/50',
-                  'focus:outline-none focus:ring-2 focus:ring-amber-600 focus:ring-inset',
+                  isFutureDate
+                    ? 'bg-stone-100 cursor-not-allowed opacity-50'
+                    : 'bg-white/80 hover:bg-white cursor-pointer shadow-sm hover:shadow-md hover:scale-105',
+                  'border border-stone-200/50 hover:border-stone-300',
+                  'focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2',
                   'focus:z-10',
-                  isSelected && 'ring-2 ring-amber-600 ring-inset bg-amber-50',
-                  isToday && 'font-semibold'
+                  isSelected && 'ring-2 ring-amber-500 ring-offset-2 scale-105 bg-amber-50',
+                  isToday && 'font-bold border-amber-400 ring-2 ring-amber-400 ring-offset-2'
                 )}
+                disabled={isFutureDate}
                 aria-label={formatDateWithDay(dateString)}
               >
                 {/* Day number */}
                 <div
                   className={cn(
-                    'text-sm',
+                    'text-sm font-medium relative z-10',
                     isToday ? 'text-amber-600' : 'text-stone-700'
                   )}
                 >
@@ -202,13 +235,13 @@ export function CalendarView({
                 </div>
 
                 {/* "+" indicator on hover for empty dates */}
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-30 transition-opacity pointer-events-none">
-                  <Plus className="w-4 h-4 text-stone-400" />
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-20 transition-opacity pointer-events-none">
+                  <Plus className="w-5 h-5 text-stone-500" />
                 </div>
 
                 {/* Today indicator */}
                 {isToday && (
-                  <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-amber-600" />
+                  <div className="absolute bottom-1.5 left-1.5 w-2 h-2 rounded-full bg-amber-500 shadow-sm" />
                 )}
               </button>
             )
@@ -217,21 +250,21 @@ export function CalendarView({
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs text-stone-600 items-center">
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-amber-600" />
-          <span>Today</span>
+      <div className="flex flex-wrap gap-x-6 gap-y-3 text-xs text-stone-600 items-center">
+        <div className="flex items-center gap-2">
+          <div className="w-3.5 h-3.5 rounded-full bg-amber-500 shadow-sm" />
+          <span className="font-medium">Today</span>
         </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 border-2 border-amber-600 rounded" />
-          <span>Selected</span>
+        <div className="flex items-center gap-2">
+          <div className="w-3.5 h-3.5 rounded-md border-2 border-amber-500 bg-white shadow-sm" />
+          <span className="font-medium">Selected</span>
         </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 bg-gradient-to-r from-stone-400 to-teal-600 rounded" />
-          <span>Rated entry (hover to preview)</span>
+        <div className="flex items-center gap-2">
+          <div className="w-3.5 h-3.5 bg-gradient-to-br from-stone-500 to-teal-600 rounded-md shadow-sm" />
+          <span className="font-medium">Entry (hover for preview)</span>
         </div>
-        <div className="text-stone-500 italic">
-          Click any date to add or view entry
+        <div className="text-stone-500 italic text-xs">
+          Click past dates to add entries • Hover to preview
         </div>
       </div>
 
@@ -245,8 +278,20 @@ export function CalendarView({
 
       {/* Screen reader hint */}
       <div id="calendar-hint" className="sr-only">
-        Hover to preview entry, click to view full details
+        Hover to preview entry, click to view full details or add new entry
       </div>
+
+      {/* Add Entry Dialog */}
+      {selectedDateForAdd && (
+        <AddEntryDialog
+          open={addEntryDialogOpen}
+          onOpenChange={setAddEntryDialogOpen}
+          dateString={selectedDateForAdd}
+          onSuccess={() => {
+            setAddEntryDialogOpen(false)
+          }}
+        />
+      )}
     </div>
   )
 }
