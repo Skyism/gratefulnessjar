@@ -10,6 +10,14 @@ export type {
   ValidationResult,
 } from './entry'
 
+export type {
+  Moment,
+  CreateMomentInput,
+  UpdateMomentInput,
+  MomentValidationError,
+  MomentValidationResult,
+} from './moment'
+
 export {
   Rating,
   RATING_LABELS,

@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Layout } from './components/layout/Layout'
 import { HomePage } from './pages/HomePage'
 import { HistoryPage } from './pages/HistoryPage'
+import { MomentsPage } from './pages/MomentsPage'
 
 /**
  * App - Main application component
@@ -14,6 +15,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<HomePage />} />
+          <Route path="moments" element={<MomentsPage />} />
           <Route path="history" element={<HistoryPage />} />
         </Route>
       </Routes>

@@ -4,6 +4,7 @@ import { getTodayDateString, formatDateString } from '@/lib/services/dateService
 import { getRandomEntry } from '@/lib/services/entryService'
 import { EntryForm } from '@/components/entry/EntryForm'
 import { EntryDetail } from '@/components/entry/EntryDetail'
+import { RandomMomentCard } from '@/components/moment/RandomMomentCard'
 import { RatingBadge } from '@/components/common/RatingSelector'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Sparkles, TrendingUp } from 'lucide-react'
@@ -118,6 +119,9 @@ export function HomePage() {
               </CardContent>
             </Card>
           )}
+
+          {/* Random moment to remember */}
+          <RandomMomentCard />
 
           {/* Motivation / Tips */}
           <Card>

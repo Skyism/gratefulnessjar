@@ -5,6 +5,7 @@ interface RatingSelectorProps {
   value: Rating | null
   onChange: (rating: Rating) => void
   disabled?: boolean
+  label?: string
   className?: string
 }
 
@@ -18,6 +19,7 @@ export function RatingSelector({
   value,
   onChange,
   disabled = false,
+  label = 'How was your day?',
   className,
 }: RatingSelectorProps) {
   const ratings = getAllRatings()
@@ -25,7 +27,7 @@ export function RatingSelector({
   return (
     <div className={cn('space-y-2', className)}>
       <label className="text-sm font-medium text-stone-700">
-        How was your day?
+        {label}
       </label>
       <div className="hidden md:grid grid-cols-7 gap-1.5">
         {ratings.map((rating) => {
